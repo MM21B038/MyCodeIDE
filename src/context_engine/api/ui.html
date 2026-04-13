@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyCodeIDE Context Engine</title>
+  <style>
+    :root {
+      --bg: #f3efe7;
+      --surface: rgba(255, 250, 242, 0.88);
+      --surface-strong: #fffdf8;
+      --surface-accent: #18222f;
+      --border: rgba(24, 34, 47, 0.12);
+      --text: #18222f;
+      --muted: #59687a;
+      --primary: #c5622d;
+      --primary-dark: #934313;
+      --success: #237357;
+      --danger: #b33a3a;
+      --shadow: 0 24px 60px rgba(34, 32, 28, 0.12);
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --mono: "Consolas", "SFMono-Regular", monospace;
+      --sans: "Segoe UI", "Trebuchet MS", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(197, 98, 45, 0.16), transparent 28%),
+        radial-gradient(circle at right 20%, rgba(24, 34, 47, 0.12), transparent 24%),
+        linear-gradient(145deg, #f9f6ef 0%, #ebe2d2 100%);
+    }
+
+    .shell {
+      width: min(1240px, calc(100vw - 32px));
+      margin: 24px auto;
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--surface);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      padding: 24px;
+      position: sticky;
+      top: 24px;
+      align-self: start;
+    }
+
+    .headline {
+      margin: 0 0 8px;
+      font-size: 1.9rem;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+
+    .subhead {
+      margin: 0 0 20px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      border: 1px solid rgba(24, 34, 47, 0.16);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font: inherit;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    .file-input {
+      width: 100%;
+      padding: 14px;
+      background: var(--surface-strong);
+      border: 1px dashed rgba(24, 34, 47, 0.28);
+      border-radius: var(--radius-md);
+    }
+
+    .toggle {
+      display: flex;
+      align-items: start;
+      gap: 12px;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+    }
+
+    .toggle input {
+      margin-top: 2px;
+      accent-color: var(--primary);
+      transform: scale(1.05);
+    }
+
+    .toggle-copy {
+      min-width: 0;
+    }
+
+    .toggle-copy strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.94rem;
+    }
+
+    .toggle-copy span {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 140ms ease, opacity 140ms ease, background 140ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+
+    .primary {
+      background: var(--primary);
+      color: #fff7f2;
+    }
+
+    .secondary {
+      background: rgba(24, 34, 47, 0.08);
+      color: var(--text);
+    }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: var(--radius-md);
+      background: var(--surface-strong);
+      border: 1px solid var(--border);
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 1.3rem;
+      margin-bottom: 4px;
+    }
+
+    .progress-wrap {
+      margin-top: 16px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(24, 34, 47, 0.1);
+      border: 1px solid rgba(24, 34, 47, 0.08);
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--primary), #ea9a66);
+      transition: width 180ms ease;
+    }
+
+    .helper {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+
+    .content {
+      padding: 24px;
+      min-width: 0;
+    }
+
+    .hero {
+      padding: 22px 24px;
+      border-radius: var(--radius-lg);
+      background:
+        linear-gradient(140deg, rgba(24, 34, 47, 0.96), rgba(47, 70, 94, 0.92)),
+        linear-gradient(90deg, rgba(197, 98, 45, 0.28), transparent);
+      color: #f7f3eb;
+    }
+
+    .hero h2 {
+      margin: 0;
+      font-size: 1.7rem;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin: 10px 0 0;
+      color: rgba(247, 243, 235, 0.78);
+      max-width: 760px;
+      line-height: 1.6;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: var(--surface-strong);
+      min-width: 0;
+    }
+
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+    }
+
+    .root-path {
+      font-family: var(--mono);
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--surface-accent);
+      word-break: break-word;
+    }
+
+    .message {
+      margin-top: 14px;
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.94rem;
+      line-height: 1.5;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.info {
+      background: rgba(24, 34, 47, 0.08);
+      color: var(--text);
+    }
+
+    .message.success {
+      background: rgba(35, 115, 87, 0.14);
+      color: var(--success);
+    }
+
+    .message.error {
+      background: rgba(179, 58, 58, 0.12);
+      color: var(--danger);
+    }
+
+    .result-stack {
+      display: grid;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .chunk-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      background: var(--surface-strong);
+      overflow: hidden;
+    }
+
+    .chunk-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+      padding: 18px 18px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chunk-head h4 {
+      margin: 0;
+      font-size: 1rem;
+      word-break: break-word;
+    }
+
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(197, 98, 45, 0.12);
+      color: var(--primary-dark);
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .score {
+      min-width: 84px;
+      text-align: right;
+      font-weight: 800;
+      color: var(--primary-dark);
+    }
+
+    pre {
+      margin: 0;
+      padding: 18px;
+      background: #111827;
+      color: #f8fafc;
+      overflow: auto;
+      font-family: var(--mono);
+      font-size: 0.9rem;
+      line-height: 1.55;
+    }
+
+    .context-pack {
+      max-height: 520px;
+    }
+
+    .empty {
+      padding: 32px 18px;
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed rgba(24, 34, 47, 0.18);
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.44);
+    }
+
+    @media (max-width: 980px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <aside class="panel sidebar">
+      <h1 class="headline">Context Engine</h1>
+      <p class="subhead">Select a project folder, index it into the local engine, then run retrieval or model-backed chat with visible context evidence.</p>
+
+      <div>
+        <label class="label" for="folderInput">Project Folder</label>
+        <input class="file-input" id="folderInput" type="file" webkitdirectory directory multiple>
+      </div>
+
+      <div class="section">
+        <label class="label" for="rootName">Display Name</label>
+        <input id="rootName" type="text" placeholder="Selected folder name">
+      </div>
+
+      <div class="section">
+        <label class="label" for="queryInput">Query</label>
+        <textarea id="queryInput" placeholder="Ask what you need from the indexed codebase"></textarea>
+      </div>
+
+      <div class="section">
+        <label class="label" for="topKInput">Top K Chunks</label>
+        <input id="topKInput" type="number" min="1" max="20" value="8">
+      </div>
+
+      <div class="section">
+        <label class="label" for="embeddingOptIn">Retrieval Mode</label>
+        <label class="toggle" for="embeddingOptIn">
+          <input id="embeddingOptIn" type="checkbox">
+          <div class="toggle-copy">
+            <strong>Allow embedding model</strong>
+            <span>Off by default. If enabled, the engine adds semantic ranking during indexing and query.</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button class="primary" id="indexButton">Index Folder</button>
+        <button class="secondary" id="queryButton">Run Query</button>
+        <button class="secondary" id="chatButton">Ask Model</button>
+      </div>
+
+      <div class="status-strip">
+        <div class="metric">
+          <strong id="metricFiles">0</strong>
+          <span>Files</span>
+        </div>
+        <div class="metric">
+          <strong id="metricChunks">0</strong>
+          <span>Chunks</span>
+        </div>
+        <div class="metric">
+          <strong id="metricMatches">0</strong>
+          <span>Matches</span>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="helper" id="progressLabel">No upload in progress.</div>
+      </div>
+
+      <div class="message info show" id="statusMessage">Load a folder to begin.</div>
+    </aside>
+
+    <section class="content">
+      <div class="hero">
+        <h2>Repository context with visible retrieval evidence</h2>
+        <p>The UI keeps the ranking trail exposed: matched files, line spans, scoring, retrieval reasons, raw context pack, and optional model answer using the same assembled context.</p>
+      </div>
+
+      <div class="info-grid">
+        <div class="card">
+          <h3>Indexed Root</h3>
+          <div class="root-path" id="rootPath">No codebase indexed yet.</div>
+        </div>
+        <div class="card">
+          <h3>Last Action</h3>
+          <div id="lastAction">No action yet.</div>
+        </div>
+      </div>
+
+      <div class="result-stack">
+        <div class="card">
+          <h3>Model Answer</h3>
+          <div id="answerPanel" class="empty">No model response yet.</div>
+        </div>
+
+        <div class="card">
+          <h3>Context Pack</h3>
+          <pre id="contextPack" class="context-pack">Run a query to inspect the assembled context pack.</pre>
+        </div>
+
+        <div class="card">
+          <h3>Ranked Chunks</h3>
+          <div id="chunksPanel" class="empty">Query results will appear here.</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      files: [],
+      indexedRoot: null,
+    };
+
+    const folderInput = document.getElementById("folderInput");
+    const rootNameInput = document.getElementById("rootName");
+    const queryInput = document.getElementById("queryInput");
+    const topKInput = document.getElementById("topKInput");
+    const indexButton = document.getElementById("indexButton");
+    const queryButton = document.getElementById("queryButton");
+    const chatButton = document.getElementById("chatButton");
+    const embeddingOptIn = document.getElementById("embeddingOptIn");
+    const metricFiles = document.getElementById("metricFiles");
+    const metricChunks = document.getElementById("metricChunks");
+    const metricMatches = document.getElementById("metricMatches");
+    const statusMessage = document.getElementById("statusMessage");
+    const progressFill = document.getElementById("progressFill");
+    const progressLabel = document.getElementById("progressLabel");
+    const rootPath = document.getElementById("rootPath");
+    const lastAction = document.getElementById("lastAction");
+    const contextPack = document.getElementById("contextPack");
+    const chunksPanel = document.getElementById("chunksPanel");
+    const answerPanel = document.getElementById("answerPanel");
+    let uploadConfig = {
+      maxFiles: 5000,
+      maxFileSizeBytes: 256000,
+      includeExtensions: [".py", ".ts", ".tsx", ".js", ".jsx", ".java", ".go", ".rs", ".json", ".md", ".yaml", ".yml"],
+      ignoreDirs: [".git", ".venv", "venv", "node_modules", "__pycache__", "dist", "build"],
+    };
+
+    folderInput.addEventListener("change", () => {
+      const selectedFiles = Array.from(folderInput.files || []);
+      state.files = filterFiles(selectedFiles);
+      const first = state.files[0] || selectedFiles[0];
+      if (!first) {
+        rootNameInput.value = "";
+        setMessage("Load a folder to begin.", "info");
+        setProgress(0, "No upload in progress.");
+        return;
+      }
+
+      const relativePath = first.webkitRelativePath || first.name;
+      const suggestedRoot = relativePath.split("/")[0] || "uploaded-project";
+      rootNameInput.value = suggestedRoot;
+      const skipped = selectedFiles.length - state.files.length;
+      const summary = skipped > 0
+        ? `Prepared ${state.files.length} supported files from ${suggestedRoot}. Skipped ${skipped} ignored or oversized files.`
+        : `Prepared ${state.files.length} supported files from ${suggestedRoot}.`;
+      setMessage(summary, "info");
+      setProgress(0, `${state.files.length} files ready for upload.`);
+    });
+
+    indexButton.addEventListener("click", () => withBusy(indexButton, async () => {
+      if (!state.files.length) {
+        setMessage("Select a folder first.", "error");
+        return;
+      }
+
+      const rootName = rootNameInput.value.trim() || "uploaded-project";
+      const formData = new FormData();
+      formData.append("root_name", rootName);
+      formData.append("use_embeddings", String(embeddingOptIn.checked));
+      setProgress(5, `Preparing ${state.files.length} files for upload...`);
+      for (const file of state.files) {
+        formData.append("files", file, file.webkitRelativePath || file.name);
+      }
+
+      setMessage("Uploading folder to the local API...", "info");
+      const job = await uploadFormData("/index/upload", formData);
+      if (!job.job_id) {
+        throw new Error("Index job was not created.");
+      }
+
+      setProgress(Math.max(job.progress_percent || 0, 90), job.message || "Upload complete. Server is indexing the codebase...");
+      setMessage("Upload complete. Server-side indexing is running...", "info");
+      const response = await waitForIndexJob(job.job_id);
+
+      applyIndexState(response);
+      metricMatches.textContent = "0";
+      lastAction.textContent = `Indexed ${response.files} files from ${response.root_path}.${response.embeddings_enabled ? " Embeddings enabled." : " Embeddings disabled."}`;
+      answerPanel.className = "empty";
+      answerPanel.textContent = "No model response yet.";
+      contextPack.textContent = "Run a query to inspect the assembled context pack.";
+      chunksPanel.className = "empty";
+      chunksPanel.textContent = "Query results will appear here.";
+      setProgress(100, `Upload finished. Indexed ${response.files} files into ${response.chunks} chunks.`);
+      setMessage(`Index complete. ${response.files} files and ${response.chunks} chunks are ready.`, "success");
+    }));
+
+    queryButton.addEventListener("click", () => runQuery("query"));
+    chatButton.addEventListener("click", () => runQuery("chat"));
+
+    async function runQuery(mode) {
+      await withBusy(mode === "query" ? queryButton : chatButton, async () => {
+        const query = queryInput.value.trim();
+        const topK = Number.parseInt(topKInput.value, 10);
+        if (!query) {
+          setMessage("Enter a query first.", "error");
+          return;
+        }
+
+        setMessage(mode === "query" ? "Retrieving ranked context..." : "Calling model with retrieved context...", "info");
+
+        const endpoint = mode === "query" ? "/query" : "/chat";
+        const payload = mode === "query"
+          ? { query, top_k: topK || 8 }
+          : { message: query, top_k: topK || 8 };
+        const response = await fetchJson(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        applyResultState(response, mode);
+      });
+    }
+
+    function applyIndexState(response) {
+      state.indexedRoot = response.root_path;
+      rootPath.textContent = response.root_path;
+      metricFiles.textContent = String(response.files);
+      metricChunks.textContent = String(response.chunks);
+      embeddingOptIn.checked = Boolean(response.embeddings_enabled);
+    }
+
+    function applyResultState(response, mode) {
+      rootPath.textContent = response.indexed_root || state.indexedRoot || "Unknown";
+      metricFiles.textContent = String(response.total_files ?? metricFiles.textContent);
+      metricChunks.textContent = String(response.total_chunks ?? metricChunks.textContent);
+
+      if (mode === "chat") {
+        answerPanel.className = "";
+        answerPanel.textContent = response.answer;
+        contextPack.textContent = response.context_pack;
+        metricMatches.textContent = "-";
+        chunksPanel.className = "empty";
+        chunksPanel.textContent = "Use Run Query to inspect ranked chunk cards for the same repository.";
+        lastAction.textContent = `Model answer generated with ${response.model_provider}${response.model_name ? ` / ${response.model_name}` : ""}.`;
+        setMessage("Model response generated from retrieved repository context.", "success");
+        return;
+      }
+
+      answerPanel.className = "empty";
+      answerPanel.textContent = "No model response yet.";
+      contextPack.textContent = response.context_pack;
+      metricMatches.textContent = String(response.ranked_chunks.length);
+      renderChunks(response.ranked_chunks);
+      lastAction.textContent = `Query completed for "${response.query}".`;
+      setMessage(`Retrieved ${response.ranked_chunks.length} ranked chunks.`, "success");
+    }
+
+    function renderChunks(chunks) {
+      if (!chunks.length) {
+        chunksPanel.className = "empty";
+        chunksPanel.textContent = "No ranked chunks matched this query.";
+        return;
+      }
+
+      chunksPanel.className = "";
+      chunksPanel.innerHTML = chunks.map((item, index) => `
+        <article class="chunk-card">
+          <div class="chunk-head">
+            <div>
+              <h4>${index + 1}. ${escapeHtml(item.chunk.file_path)}</h4>
+              <div class="chip-row">
+                <span class="chip">Lines ${item.chunk.start_line}-${item.chunk.end_line}</span>
+                ${(item.reasons || []).map((reason) => `<span class="chip">${escapeHtml(reason)}</span>`).join("")}
+              </div>
+            </div>
+            <div class="score">Score ${Number(item.score).toFixed(4)}</div>
+          </div>
+          <pre>${escapeHtml(item.chunk.content)}</pre>
+        </article>
+      `).join("");
+    }
+
+    function setMessage(message, kind) {
+      statusMessage.className = `message ${kind} show`;
+      statusMessage.textContent = message;
+    }
+
+    async function fetchJson(url, options) {
+      const response = await fetch(url, options);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const detail = payload.detail || "Request failed.";
+        setMessage(detail, "error");
+        throw new Error(detail);
+      }
+      return payload;
+    }
+
+    function uploadFormData(url, formData) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", url);
+
+        xhr.upload.addEventListener("loadstart", () => {
+          setProgress(8, "Upload started...");
+        });
+
+        xhr.upload.addEventListener("progress", (event) => {
+          if (!event.lengthComputable) {
+            setProgress(20, "Uploading files...");
+            return;
+          }
+          const percent = 10 + Math.round((event.loaded / event.total) * 70);
+          setProgress(percent, `Uploading ${formatBytes(event.loaded)} of ${formatBytes(event.total)}...`);
+        });
+
+        xhr.addEventListener("readystatechange", () => {
+          if (xhr.readyState === XMLHttpRequest.HEADERS_RECEIVED) {
+            setProgress(88, "Upload complete. Server is indexing the codebase...");
+          }
+        });
+
+        xhr.addEventListener("load", () => {
+          const payload = safeJsonParse(xhr.responseText);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(payload);
+            return;
+          }
+
+          const detail = payload.detail || `Request failed with status ${xhr.status}.`;
+          setMessage(detail, "error");
+          setProgress(0, "Upload failed.");
+          reject(new Error(detail));
+        });
+
+        xhr.addEventListener("error", () => {
+          const detail = "Network error while uploading the folder.";
+          setMessage(detail, "error");
+          setProgress(0, "Upload failed.");
+          reject(new Error(detail));
+        });
+
+        xhr.send(formData);
+      });
+    }
+
+    async function waitForIndexJob(jobId) {
+      for (;;) {
+        const job = await fetchJson(`/index/jobs/${encodeURIComponent(jobId)}`, { method: "GET" });
+        const label = job.total_files
+          ? `${job.message} (${job.processed_files}/${job.total_files} files)`
+          : job.message;
+        setProgress(job.progress_percent || 0, label);
+
+        if (job.status === "completed") {
+          return job;
+        }
+
+        if (job.status === "failed") {
+          const detail = job.error || "Indexing failed.";
+          setMessage(detail, "error");
+          throw new Error(detail);
+        }
+
+        await new Promise((resolve) => window.setTimeout(resolve, 250));
+      }
+    }
+
+    async function withBusy(button, task) {
+      const previous = button.textContent;
+      button.disabled = true;
+      button.textContent = "Working...";
+      try {
+        await task();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        button.disabled = false;
+        button.textContent = previous;
+      }
+    }
+
+    function filterFiles(files) {
+      const allowed = new Set(uploadConfig.includeExtensions.map((item) => item.toLowerCase()));
+      const ignored = new Set(uploadConfig.ignoreDirs);
+      const filtered = [];
+
+      for (const file of files) {
+        const relativePath = (file.webkitRelativePath || file.name).replaceAll("\\", "/");
+        const parts = relativePath.split("/");
+        const extension = relativePath.includes(".") ? `.${relativePath.split(".").pop().toLowerCase()}` : "";
+        if (parts.some((part) => ignored.has(part))) {
+          continue;
+        }
+        if (!allowed.has(extension)) {
+          continue;
+        }
+        if (file.size > uploadConfig.maxFileSizeBytes) {
+          continue;
+        }
+        filtered.push(file);
+        if (filtered.length >= uploadConfig.maxFiles) {
+          break;
+        }
+      }
+
+      return filtered;
+    }
+
+    function setProgress(percent, label) {
+      progressFill.style.width = `${Math.max(0, Math.min(percent, 100))}%`;
+      progressLabel.textContent = label;
+    }
+
+    function safeJsonParse(value) {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return {};
+      }
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes) || bytes <= 0) {
+        return "0 B";
+      }
+      const units = ["B", "KB", "MB", "GB"];
+      const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+      const value = bytes / (1024 ** index);
+      return `${value.toFixed(value >= 10 || index === 0 ? 0 : 1)} ${units[index]}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    loadState();
+
+    async function loadState() {
+      try {
+        const response = await fetchJson("/state", { method: "GET" });
+        if (response.indexed_root) {
+          applyIndexState({
+            root_path: response.indexed_root,
+            files: response.files,
+            chunks: response.chunks,
+            embeddings_enabled: response.embeddings_enabled,
+          });
+          lastAction.textContent = `Existing index detected for ${response.indexed_root}.`;
+          setMessage("Existing indexed state loaded.", "info");
+        }
+        embeddingOptIn.checked = Boolean(response.embeddings_enabled);
+        uploadConfig = {
+          maxFiles: response.max_files || uploadConfig.maxFiles,
+          maxFileSizeBytes: response.max_file_size_bytes || uploadConfig.maxFileSizeBytes,
+          includeExtensions: response.include_extensions || uploadConfig.includeExtensions,
+          ignoreDirs: response.ignore_dirs || uploadConfig.ignoreDirs,
+        };
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>

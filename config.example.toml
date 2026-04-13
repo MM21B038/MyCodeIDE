@@ -1,0 +1,45 @@
+[engine]
+max_files = 5000
+max_file_size_bytes = 256000
+default_window = 20
+top_k_chunks = 8
+top_k_files = 5
+
+[llm]
+provider = "openai_compatible"
+model = "gpt-4o-mini"
+base_url = "https://api.openai.com/v1"
+api_key_env = "OPENAI_API_KEY"
+timeout_seconds = 60
+temperature = 0.1
+
+[embeddings]
+provider = "sentence_transformers"
+model = "all-MiniLM-L6-v2"
+
+# OpenAI-compatible embeddings example:
+# [embeddings]
+# provider = "openai_compatible"
+# model = "text-embedding-3-small"
+# base_url = "https://api.openai.com/v1"
+# api_key_env = "OPENAI_API_KEY"
+# timeout_seconds = 60
+
+# OpenRouter chat example:
+# [llm]
+# provider = "openrouter"
+# model = "openai/gpt-4o-mini"
+# base_url = "https://openrouter.ai/api/v1"
+# api_key_env = "OPENROUTER_API_KEY"
+
+# Gemini chat example:
+# [llm]
+# provider = "gemini"
+# model = "gemini-1.5-flash"
+# api_key_env = "GEMINI_API_KEY"
+
+# Ollama embeddings example:
+# [embeddings]
+# provider = "ollama"
+# model = "nomic-embed-text"
+# base_url = "http://localhost:11434"

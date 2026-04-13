@@ -1,0 +1,16 @@
+{
+  "name": "mycodeide-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "TypeScript desktop app for the MyCodeIDE context engine",
+  "main": "desktop-dist/main.js",
+  "scripts": {
+    "build:desktop": "tsc -p tsconfig.desktop.json && node desktop-src/tools/copy-static.mjs",
+    "start": "npm run build:desktop && electron ./desktop-dist/main.js"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "electron": "^37.2.0",
+    "typescript": "^5.8.0"
+  }
+}

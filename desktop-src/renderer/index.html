@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyCodeIDE Desktop</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="sidebar panel">
+      <div class="brand-block">
+        <p class="eyebrow">MyCodeIDE Desktop</p>
+        <h1>Repository context without browser friction</h1>
+        <p class="lede">Pick a local folder, watch live indexing progress, inspect ranked evidence, and switch between retrieval and chat in one desktop workspace.</p>
+      </div>
+
+      <section class="sidebar-section">
+        <div class="section-label">Runtime</div>
+        <div class="runtime-card">
+          <span class="runtime-badge" id="runtimeBadge" data-state="starting">STARTING</span>
+          <div class="runtime-message" id="runtimeMessage">Starting local API runtime...</div>
+        </div>
+      </section>
+
+      <section class="sidebar-section">
+        <div class="section-label">Project</div>
+        <button class="primary-button" id="selectFolderButton">Choose Folder</button>
+        <div class="folder-card">
+          <div class="folder-name" id="folderName">No folder selected</div>
+          <div class="folder-path" id="folderPath">Use the folder picker to start.</div>
+        </div>
+      </section>
+
+      <section class="sidebar-section">
+        <div class="section-label">Retrieval Mode</div>
+        <label class="toggle-card">
+          <input id="embeddingToggle" type="checkbox">
+          <span>
+            <strong>Allow embedding model</strong>
+            <small>Disabled by default. Turn this on only when you want semantic ranking.</small>
+          </span>
+        </label>
+      </section>
+
+      <section class="sidebar-section">
+        <div class="section-label">Query</div>
+        <textarea id="queryInput" placeholder="Ask about architecture, bugs, data flow, symbol usage, or implementation details."></textarea>
+        <div class="query-controls">
+          <label>
+            <span>Top K</span>
+            <input id="topKInput" type="number" min="1" max="20" value="8">
+          </label>
+        </div>
+        <div class="button-row">
+          <button class="primary-button" id="indexButton">Index Folder</button>
+          <button class="secondary-button" id="queryButton">Run Query</button>
+          <button class="secondary-button" id="chatButton">Ask Model</button>
+        </div>
+      </section>
+
+      <section class="sidebar-section">
+        <div class="section-label">Progress</div>
+        <div class="progress-card">
+          <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="progress-label" id="progressLabel">No indexing job running.</div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="content">
+      <div class="hero panel">
+        <div>
+          <p class="eyebrow">Context Board</p>
+          <h2>Hybrid retrieval with visible evidence</h2>
+        </div>
+        <div class="metrics">
+          <div class="metric-card">
+            <span>Files</span>
+            <strong id="filesMetric">0</strong>
+          </div>
+          <div class="metric-card">
+            <span>Chunks</span>
+            <strong id="chunksMetric">0</strong>
+          </div>
+          <div class="metric-card">
+            <span>Matches</span>
+            <strong id="matchesMetric">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <section class="panel info-card">
+          <div class="section-label">Indexed Root</div>
+          <div class="info-value" id="indexedRoot">No indexed repository yet.</div>
+        </section>
+        <section class="panel info-card">
+          <div class="section-label">Last Action</div>
+          <div class="info-value" id="lastAction">Select a folder to begin.</div>
+        </section>
+      </div>
+
+      <div class="workspace-grid">
+        <section class="panel workspace-column">
+          <div class="workspace-header">
+            <div>
+              <p class="eyebrow">Model</p>
+              <h3>Answer</h3>
+            </div>
+          </div>
+          <div class="scroll-panel prose-panel" id="answerPanel"></div>
+        </section>
+
+        <section class="panel workspace-column">
+          <div class="workspace-header">
+            <div>
+              <p class="eyebrow">Retriever</p>
+              <h3>Context Pack</h3>
+            </div>
+          </div>
+          <pre class="scroll-panel code-panel" id="contextPanel"></pre>
+        </section>
+      </div>
+
+      <section class="panel chunk-board">
+        <div class="workspace-header">
+          <div>
+            <p class="eyebrow">Evidence Trail</p>
+            <h3>Ranked Chunks</h3>
+          </div>
+        </div>
+        <div class="chunk-list scroll-panel" id="chunksPanel"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="./renderer.js"></script>
+</body>
+</html>

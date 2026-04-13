@@ -1,0 +1,17 @@
+[engine]
+max_files = 5000
+max_file_size_bytes = 256000
+default_window = 20
+top_k_chunks = 8
+top_k_files = 5
+
+[llm]
+provider = "openrouter"
+model = "openai/gpt-oss-120b:free"
+base_url = "https://openrouter.ai/api/v1"
+api_key_env = "OPENROUTER_API_KEY"
+
+[embeddings]
+provider = "ollama"
+model = "embeddinggemma:300m"
+base_url = "http://localhost:11434"
