@@ -12,6 +12,5 @@ base_url = "https://openrouter.ai/api/v1"
 api_key_env = "OPENROUTER_API_KEY"
 
 [embeddings]
-provider = "ollama"
-model = "embeddinggemma:300m"
-base_url = "http://localhost:11434"
+provider = "sentence_transformers"
+model = "all-MiniLM-L6-v2"
